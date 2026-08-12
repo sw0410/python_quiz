@@ -1,57 +1,60 @@
+import json
+import os
 import sys
 
-# ==========================================
-# 1. Quiz 클래스 (개별 퀴즈 표현)
-# ==========================================
-class Quiz:
-    """개별 퀴즈를 표현하는 클래스"""
+# 분리된 quiz.py 모듈에서 Quiz 클래스와 DEFAULT_QUIZZES 가져오기
+from quiz import DEFAULT_QUIZZES, Quiz
 
-    def __init__(self, question: str, choices: list[str], answer: int):
-        self.question = question
-        self.choices = choices  # 4개의 선택지 리스트
-        self.answer = answer    # 정답 번호 (1~4)
-
-    def is_correct(self, user_choice: int) -> bool:
-        """사용자가 입력한 번호가 정답인지 검증"""
-        return self.answer == user_choice
-
-    def to_dict(self) -> dict:
-        """state.json 저장을 위한 직렬화"""
-        return {
-            "question": self.question,
-            "choices": self.choices,
-            "answer": self.answer
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> 'Quiz':
-        """json 데이터로부터 객체를 복원하는 팩토리 메서드"""
-        return cls(
-            question=data["question"],
-            choices=data["choices"],
-            answer=data["answer"]
-        )
-
-
-# 기본 퀴즈 데이터셋 (최소 5개)
-DEFAULT_QUIZZES = [
-    Quiz("Python에서 가변(Mutable) 객체에 해당하는 것은?", ["tuple", "int", "list", "str"], 3),
-    Quiz("Python에서 리스트의 길이를 반환하는 함수는?", ["size()", "len()", "length()", "count()"], 2),
-    Quiz("다음 중 Python의 주석 기호로 올바른 것은?", ["//", "/* */", "#", "--"], 3),
-    Quiz("딕셔너리(dict)에서 키-값 쌍을 모두 가져오는 메서드는?", ["keys()", "values()", "items()", "get()"], 3),
-    Quiz("Python의 붕어빵 틀에 해당하는 개념으로, 객체를 생성하기 위한 설계도는?", ["Function", "Class", "Module", "Package"], 2)
-]
-
+STATE_FILE = "state.json"
 
 # ==========================================
-# 2. QuizGame 클래스 (전체 게임 제어 및 관리)
+# QuizGame 클래스 (전체 게임 제어 및 관리)
 # ==========================================
 class QuizGame:
-    """게임 전체 흐름, 상태 관리 및 인터페이스를 총괄하는 클래스"""
+    """게임 전체 흐름, 상태 관리 및 영속성을 총괄하는 클래스"""
 
     def __init__(self):
-        self.quizzes: list[Quiz] = list(DEFAULT_QUIZZES)  # 기본 퀴즈 데이터 탑재
+        self.quizzes: list[Quiz] = []
         self.best_score: int = 0
+        self.load_state()  # 저장된 상태 불러오기
+
+    def load_state(self):
+        """state.json 파일에서 퀴즈 데이터와 최고 점수를 불러옴 (예외 처리 포함)"""
+        if not os.path.exists(STATE_FILE):
+            # 파일이 없으면 기본 데이터 사용 및 생성
+            self.quizzes = list(DEFAULT_QUIZZES)
+            self.best_score = 0
+            self.save_state()
+            return
+
+        try:
+            with open(STATE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                self.quizzes = [Quiz.from_dict(q) for q in data.get("quizzes", [])]
+                self.best_score = data.get("best_score", 0)
+
+                # 파일은 존재하지만 퀴즈 데이터가 비어있는 경우 기본값 복구
+                if not self.quizzes:
+                    self.quizzes = list(DEFAULT_QUIZZES)
+
+        except (json.JSONDecodeError, KeyError, Exception):
+            # 파일이 손상되었거나 형식이 올바르지 않은 경우
+            print("\n⚠️ state.json 파일이 손상되었습니다. 기본 데이터로 복구합니다.")
+            self.quizzes = list(DEFAULT_QUIZZES)
+            self.best_score = 0
+            self.save_state()
+
+    def save_state(self):
+        """state.json 파일에 현재 상태(퀴즈 목록, 최고 점수)를 저장"""
+        try:
+            data = {
+                "quizzes": [q.to_dict() for q in self.quizzes],
+                "best_score": self.best_score
+            }
+            with open(STATE_FILE, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"\n⚠️ 데이터 저장 중 오류가 발생했습니다: {e}")
 
     def display_menu(self):
         """메인 메뉴 출력"""
@@ -101,12 +104,14 @@ class QuizGame:
                 elif choice == 4:
                     self.show_best_score()
                 elif choice == 5:
+                    self.save_state()
                     print("\n게임을 종료합니다. 이용해 주셔서 감사합니다!")
                     break
 
         except (KeyboardInterrupt, EOFError):
             print("\n\n⚠️ 프로그램이 강제 종료 요청을 받았습니다.")
-            print("안전하게 프로그램을 종료합니다.")
+            self.save_state()
+            print("안전하게 데이터를 저장 후 종료합니다.")
             sys.exit(0)
 
     def play_quiz(self):
@@ -142,15 +147,67 @@ class QuizGame:
         if current_score > self.best_score:
             print(f"🎊 축하합니다! 새로운 최고 점수 달성! ({self.best_score}점 ➡️ {current_score}점)")
             self.best_score = current_score
+            self.save_state()  # 최고 점수 갱신 시 자동 저장
         else:
             print(f"현재 최고 점수: {self.best_score}점")
         print("=" * 30)
 
     def add_quiz(self):
-        print("\n[안내] 퀴즈 추가 기능은 준비 중입니다.")
+        """2. 퀴즈 추가 기능 구현"""
+        print("\n" + "=" * 30)
+        print("          새 퀴즈 등록")
+        print("=" * 30)
+
+        # 문제 입력 검증
+        while True:
+            question = input("문제 내용을 입력하세요: ").strip()
+            if question:
+                break
+            print("⚠️ 문제 내용은 비어 둘 수 없습니다.")
+
+        # 선택지 4개 입력받기
+        choices = []
+        for i in range(1, 5):
+            while True:
+                choice_text = input(f"선택지 {i}번: ").strip()
+                if choice_text:
+                    choices.append(choice_text)
+                    break
+                print("⚠️ 선택지 내용은 비어 둘 수 없습니다.")
+
+        # 정답 번호 입력받기
+        answer = self.get_valid_input("정답 번호를 입력하세요 (1~4): ", 1, 4)
+
+        # 퀴즈 객체 생성 및 목록 추가
+        new_quiz = Quiz(question, choices, answer)
+        self.quizzes.append(new_quiz)
+        self.save_state()  # 즉시 파일 저장
+
+        print("\n✅ 새로운 퀴즈가 성공적으로 등록되었습니다!")
 
     def show_quiz_list(self):
-        print("\n[안내] 퀴즈 목록 기능은 준비 중입니다.")
+        """3. 퀴즈 목록 조회 기능 구현"""
+        if not self.quizzes:
+            print("\n⚠️ 저장된 퀴즈가 없습니다.")
+            return
+
+        print("\n" + "=" * 30)
+        print(f"      등록된 퀴즈 목록 (총 {len(self.quizzes)}개)")
+        print("=" * 30)
+
+        for idx, quiz in enumerate(self.quizzes, 1):
+            print(f"\n[{idx}] {quiz.question}")
+            for i, choice in enumerate(quiz.choices, 1):
+                print(f"   {i}) {choice}")
+            print(f"   👉 정답: {quiz.answer}번")
 
     def show_best_score(self):
-        print("\n[안내] 최고 점수 확인 기능은 준비 중입니다.")
+        """4. 최고 점수 확인 기능 구현"""
+        print("\n" + "=" * 30)
+        print("           최고 점수")
+        print("=" * 30)
+        if self.best_score == 0:
+            print("아직 기록된 최고 점수가 없습니다. 퀴즈를 풀어보세요!")
+        else:
+            print(f"🏆 현재 최고 점수: {self.best_score}점")
+        print("=" * 30)
