@@ -1,6 +1,8 @@
 import json
 import os
 import sys
+import random
+
 
 # 분리된 quiz.py 모듈에서 Quiz 클래스와 DEFAULT_QUIZZES 가져오기
 from quiz import DEFAULT_QUIZZES, Quiz
@@ -64,8 +66,9 @@ class QuizGame:
         print("1. 퀴즈 풀기")
         print("2. 퀴즈 추가")
         print("3. 퀴즈 목록")
-        print("4. 최고 점수 확인")
-        print("5. 종료")
+        print("4. 퀴즈 삭제")
+        print("5. 최고 점수 확인")
+        print("6. 종료")
         print("=" * 30)
 
     def get_valid_input(self, prompt: str, min_val: int, max_val: int) -> int:
@@ -101,9 +104,11 @@ class QuizGame:
                     self.add_quiz()
                 elif choice == 3:
                     self.show_quiz_list()
-                elif choice == 4:
-                    self.show_best_score()
+                elif choice == 4:    
+                    self.delete_quiz()
                 elif choice == 5:
+                    self.show_best_score()
+                elif choice == 6:
                     self.save_state()
                     print("\n게임을 종료합니다. 이용해 주셔서 감사합니다!")
                     break
@@ -124,10 +129,13 @@ class QuizGame:
         print("         퀴즈 풀기 시작")
         print("=" * 30)
 
-        current_score = 0
-        total_quizzes = len(self.quizzes)
+        shuffled_quizzes = list(self.quizzes)
+        random.shuffle(shuffled_quizzes)        
 
-        for idx, quiz in enumerate(self.quizzes, 1):
+        current_score = 0
+        total_quizzes = len(shuffled_quizzes)
+
+        for idx, quiz in enumerate(shuffled_quizzes, 1):
             print(f"\n[문제 {idx}/{total_quizzes}] {quiz.question}")
             for i, choice in enumerate(quiz.choices, 1):
                 print(f"  {i}. {choice}")
@@ -211,3 +219,29 @@ class QuizGame:
         else:
             print(f"🏆 현재 최고 점수: {self.best_score}점")
         print("=" * 30)
+
+    def delete_quiz(self):
+        """등록된 퀴즈를 선택하여 삭제하고 state.json에 반영"""
+        if not self.quizzes:
+            print("\n⚠️ 등록된 퀴즈가 없습니다.")
+            return
+
+        print("\n" + "=" * 30)
+        print("          퀴즈 삭제")
+        print("=" * 30)
+
+        # 현재 등록된 퀴즈 목록 번호와 함께 출력
+        for idx, quiz in enumerate(self.quizzes, 1):
+            print(f"[{idx}] {quiz.question}")
+
+        prompt = f"\n삭제할 퀴즈 번호를 입력하세요 (1~{len(self.quizzes)}, 취소: 0): "
+        choice = self.get_valid_input(prompt, 0, len(self.quizzes))
+
+        if choice == 0:
+            print("\n삭제를 취소했습니다.")
+            return
+
+        # 선택한 퀴즈 삭제 및 파일 영구 반영
+        deleted_quiz = self.quizzes.pop(choice - 1)
+        self.save_state()
+        print(f"\n✅ '{deleted_quiz.question}' 문제가 삭제되었습니다. (state.json 반영 완료)")
