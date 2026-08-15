@@ -96,7 +96,7 @@ class QuizGame:
         try:
             while True:
                 self.display_menu()
-                choice = self.get_valid_input("메뉴를 선택하세요: ", 1, 5)
+                choice = self.get_valid_input("메뉴를 선택하세요: ", 1, 6)
 
                 if choice == 1:
                     self.play_quiz()
