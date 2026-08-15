@@ -128,7 +128,8 @@ class QuizGame:
         print("\n" + "=" * 30)
         print("         퀴즈 풀기 시작")
         print("=" * 30)
-
+        
+        # 문제 순서 랜덤 셔플
         shuffled_quizzes = list(self.quizzes)
         random.shuffle(shuffled_quizzes)        
 
