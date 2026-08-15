@@ -72,18 +72,19 @@ python_quiz/
 {
   "quizzes": [
     {
-      "question": "노르웨이의 수도는?",
+      "question": "Python에서 가변(Mutable) 객체에 해당하는 것은?",
       "choices": [
-        "오슬로",
-        "트롬쇠",
-        "릴해머",
-        "베르겐"
+        "tuple",
+        "int",
+        "list",
+        "str"
       ],
       "answer": 1
     }
   ],
   "best_score": 6
 }
+
 ```
 
 
