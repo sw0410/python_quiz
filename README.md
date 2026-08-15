@@ -119,3 +119,6 @@ python_quiz/
 | **메서드** | `show_best_score()` | 4번 메뉴: 현재 기록된 최고 점수 출력 |
 
 
+
+## 8. 실습 기록
+- Git clone & pull 실습 변경사항 반영 완료
