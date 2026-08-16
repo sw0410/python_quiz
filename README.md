@@ -195,6 +195,10 @@ python_quiz/
 ![브랜치 병합 결과](screenshots/git_merge.png)
 > `feat/random-quiz`, `feat/delete-quiz` 브랜치를 `--no-ff` 옵션으로 병합한 결과, 브랜치 그래프가 분기·병합 형태로 남아 있는 것을 확인할 수 있습니다.
 
+### Git Pull 실습 완료**: 원격 저장소(GitHub)의 변경 사항이 로컬로 정상 동기화되었습니다!
+
+![git pull](screenshots/git_pull.png)
+
 ---
 ## 8. 핵심 학습 및 개념 회고 (Core Concepts & Key Learnings)
 
@@ -263,8 +267,5 @@ python_quiz/
   - 개발 완료 후 `git merge --no-ff`를 통해 분기 및 합류 지점을 커밋 그래프 상에 명확히 남기며 `main` 브랜치로 통합합니다.
 
 
-- **Git Pull 실습 완료**: 원격 저장소(GitHub)의 변경 사항이 로컬로 정상 동기화되었습니다!
-
-![git pull](screenshots/git_pull.png)
 
 
