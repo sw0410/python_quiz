@@ -260,6 +260,8 @@ python_quiz/
 - **브랜치(Branch) 생성 및 병합(Merge)**:
   - `feat/random-quiz`, `feat/delete-quiz`처럼 메인 코드라인(`main`)과 격리된 독립 환경에서 기능을 개발합니다.
   - 개발 완료 후 `git merge --no-ff`를 통해 분기 및 합류 지점을 커밋 그래프 상에 명확히 남기며 `main` 브랜치로 통합합니다.
+ 
+> **Git Pull 실습 완료**: 원격 저장소(GitHub)의 변경 사항이 로컬로 정상 동기화되었습니다.
 
 
 
